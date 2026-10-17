@@ -1019,9 +1019,7 @@
     <div class="container">
       <nav class="tabs-scroll" aria-label="Navigasi Utama">
         <button type="button" class="tab-btn active" data-tab="bukti" onclick="switchTab('bukti')">📑 Bukti Dukung (6 Pilar)</button>
-        <button type="button" class="tab-btn" data-tab="template" onclick="switchTab('template')">📥 Format &amp; Template (11)</button>
         <button type="button" class="tab-btn" data-tab="rekap" onclick="switchTab('rekap')">📊 Rekap Nilai LKE</button>
-        <button type="button" class="tab-btn" data-tab="drive" onclick="switchTab('drive')">📁 Struktur Google Drive</button>
       </nav>
     </div>
   </div>
@@ -1091,159 +1089,6 @@
 
       <!-- 3-TIER HIERARCHICAL TREE CONTAINER -->
       <div id="treeContainer" class="tree-container"></div>
-    </div>
-
-    <!-- TAB 2: FORMAT & TEMPLATE -->
-    <div id="tab-template" class="tab-content">
-      <div style="margin-bottom: 14px;">
-        <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--text);">📥 Format &amp; Template Resmi Siap Pakai</h2>
-        <p style="font-size: 0.82rem; color: var(--text-muted);">Format dokumen baku bertuliskan kop resmi <strong>Badan Pusat Statistik Kabupaten Kepulauan Selayar</strong> untuk memenuhi bukti dukung LKE 2025.</p>
-      </div>
-
-      <!-- Banner Download Semua -->
-      <div style="background: var(--primary-light); border: 1px solid var(--primary-border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-        <div>
-          <div style="font-size: 0.95rem; font-weight: 800; color: var(--primary);">📦 Paket Lengkap Bukti Dukung 6 Area (ZIP)</div>
-          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Memuat seluruh 110 folder indikator, 119 dokumen Word (.docx), master checklist Excel, dan panduan resmi pemetaan BPS RI.</div>
-        </div>
-        <a href="templates/Bukti_Dukung_ZI_BPS_Kepulauan_Selayar_2025_LENGKAP.zip" download class="btn-download-tpl" style="width: auto; padding: 10px 18px; background: var(--primary);">
-          <span>⚡</span><span>Unduh Paket Lengkap .ZIP (5 MB)</span>
-        </a>
-      </div>
-
-      <div class="template-grid">
-        <!-- Template 0: Master Checklist Excel -->
-        <div class="tpl-card" style="border-left: 4px solid var(--success);">
-          <div>
-            <span class="tpl-tag tpl-tag-excel">EXCEL (.XLSX) • MASTER CHECKLIST</span>
-            <div class="tpl-name">📊 Master Checklist &amp; Nilai LKE 2025</div>
-            <div class="tpl-desc">Buku kerja Excel berisi lembar Ringkasan Nilai 6 Area dan lembar Checklist 110 indikator bukti dukung lengkap dengan formula capaian.</div>
-          </div>
-          <a href="templates/Checklist_Bukti_Dukung_ZI_BPS_Kepulauan_Selayar_2025.xlsx" download class="btn-download-tpl" style="background: var(--success);">
-            <span>⬇️</span><span>Unduh Excel (.xlsx)</span>
-          </a>
-        </div>
-
-        <!-- Template 1: SK Tim Kerja ZI -->
-        <div class="tpl-card">
-          <div>
-            <span class="tpl-tag tpl-tag-word">AREA 1 • WORD (.DOCX)</span>
-            <div class="tpl-name">Format 01: SK Tim Pembangunan ZI 2025</div>
-            <div class="tpl-desc">Keputusan Kepala BPS Kab. Kepulauan Selayar tentang Pembentukan Tim Kerja ZI Menuju WBK/WBBM beserta lampiran koordinator 6 Area.</div>
-          </div>
-          <a href="templates/Format_01_SK_Tim_Pembangunan_ZI_2025_BPS_Selayar.docx" download class="btn-download-tpl">
-            <span>⬇️</span><span>Unduh Word (.docx)</span>
-          </a>
-        </div>
-
-        <!-- Template 2: Notula Rapat Pembentukan Tim -->
-        <div class="tpl-card">
-          <div>
-            <span class="tpl-tag tpl-tag-word">AREA 1 • WORD (.DOCX)</span>
-            <div class="tpl-name">Format 02: Notula Pemilihan Anggota Tim</div>
-            <div class="tpl-desc">Risalah rapat pembentukan tim, kriteria objektif pemilihan, dan mekanisme penunjukan anggota yang mewakili seluruh fungsi.</div>
-          </div>
-          <a href="templates/Format_02_Notula_Rapat_Pembentukan_Tim_ZI_BPS_Selayar.docx" download class="btn-download-tpl">
-            <span>⬇️</span><span>Unduh Word (.docx)</span>
-          </a>
-        </div>
-
-        <!-- Template 3: Benturan Kepentingan -->
-        <div class="tpl-card" style="border-left: 4px solid var(--danger);">
-          <div>
-            <span class="tpl-tag tpl-tag-danger">AREA 5 • PRIORITAS KRITIS</span>
-            <div class="tpl-name">Format 03: Pernyataan Bebas Benturan Kepentingan</div>
-            <div class="tpl-desc">Sesuai Perka BPS No. 36/2023. Wajib ditandatangani PPK, Pejabat Pengadaan, Panitia Rekrutmen Mitra, dan Pimpinan.</div>
-          </div>
-          <a href="templates/Format_03_Surat_Pernyataan_Bebas_Benturan_Kepentingan_BPS_Selayar.docx" download class="btn-download-tpl" style="background: var(--danger);">
-            <span>⬇️</span><span>Unduh Word (.docx)</span>
-          </a>
-        </div>
-
-        <!-- Template 4: Laporan Monev ZI -->
-        <div class="tpl-card">
-          <div>
-            <span class="tpl-tag tpl-tag-word">AREA 1 • WORD (.DOCX)</span>
-            <div class="tpl-name">Format 04: Laporan Monev ZI Triwulanan</div>
-            <div class="tpl-desc">Laporan monitoring berkala per triwulan yang memuat analisa kendala, capaian matriks aksi, dan arahan tindak lanjut pimpinan.</div>
-          </div>
-          <a href="templates/Format_04_Laporan_Monev_ZI_Triwulan_BPS_Selayar.docx" download class="btn-download-tpl">
-            <span>⬇️</span><span>Unduh Word (.docx)</span>
-          </a>
-        </div>
-
-        <!-- Template 5: Pakta Integritas -->
-        <div class="tpl-card">
-          <div>
-            <span class="tpl-tag tpl-tag-word">AREA 1 &amp; 5 • WORD (.DOCX)</span>
-            <div class="tpl-name">Format 05: Pakta Integritas Pegawai ZI 2025</div>
-            <div class="tpl-desc">Komitmen bersama pencegahan KKN, penolakan suap/gratifikasi, dan kepatuhan Core Values BerAKHLAK seluruh pegawai Selayar.</div>
-          </div>
-          <a href="templates/Format_05_Pakta_Integritas_Pegawai_BPS_Selayar.docx" download class="btn-download-tpl">
-            <span>⬇️</span><span>Unduh Word (.docx)</span>
-          </a>
-        </div>
-
-        <!-- Template 6: Reward Punishment PST -->
-        <div class="tpl-card" style="border-left: 4px solid var(--warning);">
-          <div>
-            <span class="tpl-tag tpl-tag-warning">AREA 6 • PRIORITAS</span>
-            <div class="tpl-name">Format 06: Reward &amp; Punishment Petugas Layanan</div>
-            <div class="tpl-desc">Pedoman penilaian berkala petugas loket Pelayanan Statistik Terpadu (PST) berdasarkan kepuasan tamu dan disiplin.</div>
-          </div>
-          <a href="templates/Format_06_Pedoman_Reward_Punishment_Petugas_Layanan_BPS_Selayar.docx" download class="btn-download-tpl" style="background: var(--warning);">
-            <span>⬇️</span><span>Unduh Word (.docx)</span>
-          </a>
-        </div>
-
-        <!-- Template 7: Role Model Pimpinan -->
-        <div class="tpl-card">
-          <div>
-            <span class="tpl-tag tpl-tag-word">AREA 1 • WORD (.DOCX)</span>
-            <div class="tpl-name">Format 07: Laporan Penerapan Role Model Pimpinan</div>
-            <div class="tpl-desc">Dokumentasi keteladanan pimpinan satker dalam penerapan nilai BerAKHLAK, kehadiran apel pagi, dan kepatuhan LHKPN.</div>
-          </div>
-          <a href="templates/Format_07_Laporan_Penerapan_Role_Model_Pimpinan_BPS_Selayar.docx" download class="btn-download-tpl">
-            <span>⬇️</span><span>Unduh Word (.docx)</span>
-          </a>
-        </div>
-
-        <!-- Template 8: Agen Perubahan -->
-        <div class="tpl-card">
-          <div>
-            <span class="tpl-tag tpl-tag-word">AREA 1 • WORD (.DOCX)</span>
-            <div class="tpl-name">Format 08: Laporan Agen Perubahan (Change Agent)</div>
-            <div class="tpl-desc">Laporan hasil inovasi nyata agen perubahan yang terintegrasi ke dalam sistem operasional BPS Kab. Kepulauan Selayar.</div>
-          </div>
-          <a href="templates/Format_08_Laporan_Agen_Perubahan_BPS_Selayar.docx" download class="btn-download-tpl">
-            <span>⬇️</span><span>Unduh Word (.docx)</span>
-          </a>
-        </div>
-
-        <!-- Template 9: Evaluasi SOP -->
-        <div class="tpl-card">
-          <div>
-            <span class="tpl-tag tpl-tag-word">AREA 2 • WORD (.DOCX)</span>
-            <div class="tpl-name">Format 09: Kertas Kerja Evaluasi &amp; Reviu SOP</div>
-            <div class="tpl-desc">Format kertas kerja evaluasi tahunan SOP administrasi pemerintahan sesuai Perka BPS No. 19 Tahun 2013.</div>
-          </div>
-          <a href="templates/Format_09_Kertas_Kerja_Evaluasi_SOP_BPS_Selayar.docx" download class="btn-download-tpl">
-            <span>⬇️</span><span>Unduh Word (.docx)</span>
-          </a>
-        </div>
-
-        <!-- Template 10: Pengaduan & WBS -->
-        <div class="tpl-card" style="border-left: 4px solid var(--danger);">
-          <div>
-            <span class="tpl-tag tpl-tag-danger">AREA 5 • PRIORITAS KRITIS</span>
-            <div class="tpl-name">Format 10: Laporan Pengaduan Masyarakat &amp; WBS</div>
-            <div class="tpl-desc">Laporan pengelolaan saluran aduan SP4N-LAPOR!, kotak aduan, dan WBS (termasuk format Surat Keterangan Nihil Aduan).</div>
-          </div>
-          <a href="templates/Format_10_Laporan_Pengelolaan_Pengaduan_dan_WBS_BPS_Selayar.docx" download class="btn-download-tpl" style="background: var(--danger);">
-            <span>⬇️</span><span>Unduh Word (.docx)</span>
-          </a>
-        </div>
-      </div>
     </div>
 
     <!-- TAB 3: REKAP NILAI LKE -->
@@ -1347,39 +1192,6 @@
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
-
-    <!-- TAB 4: STRUKTUR GOOGLE DRIVE -->
-    <div id="tab-drive" class="tab-content">
-      <div class="drive-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-          <div>
-            <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--text);">📁 Struktur Standar Folder Google Drive</h2>
-            <p style="font-size: 0.82rem; color: var(--text-muted);">Struktur folder baku untuk mempermudah pemeriksaan oleh TPI BPS dan TPN KemenPAN-RB.</p>
-          </div>
-          <a href="https://drive.google.com/drive/folders/16lT-0q81UKuSPrtD-_UGcEj4Nh2Jms_3?usp=sharing" target="_blank" rel="noopener noreferrer" class="btn-action btn-action-primary">
-            <span>↗️</span><span>Buka Root Drive Selayar</span>
-          </a>
-        </div>
-
-        <div class="drive-code-block">📁 [ROOT] ZI / Bukti Dukung ZI 2025 BPS Kab. Kepulauan Selayar
-│
-├── 📁 Bukti_Dukung_Selayar_2025/ (Template Dokumen Resmi Selayar)
-│   ├── 📁 01_Manajemen_Perubahan/ (SK Tim, Prosedur Pemilihan, Rencana Kerja, Monev TW)
-│   ├── 📁 02_Penataan_Tatalaksana/ (SOP Administrasi, Pemanfaatan TI, SPBE)
-│   ├── 📁 03_Penataan_Sistem_Manajemen_SDM/ (ABK, Mutasi, Diklat 20JP, Reward)
-│   ├── 📁 04_Penguatan_Akuntabilitas/ (SMART, LAKIN Tepat Waktu, IKU)
-│   ├── 📁 05_Penguatan_Pengawasan/ (SPIP Risiko, Pengaduan, Benturan Kepentingan)
-│   └── 📁 06_Peningkatan_Pelayanan_Publik/ (Standar Pelayanan, FKP, PST, SKD)
-│
-└── 📁 Contoh_Bukti_Dukung_Pusat/ (378 Berkas Dokumen Contoh Asli BPS Pusat - 1.1 GB)
-    ├── 📁 Pilar_1_Manajemen_Perubahan/ (28 file - 44.9 MB)
-    ├── 📁 Pilar_2_Penataan_Tatalaksana/ (109 file - 229.9 MB)
-    ├── 📁 Pilar_3_Penataan_Sistem_Manajemen_SDM_Aparatur/ (99 file - 627.1 MB)
-    ├── 📁 Pilar_4_Penguatan_Akuntabilitas/ (28 file - 24.4 MB)
-    ├── 📁 Pilar_5_Penguatan_Pengawasan/ (49 file - 91.0 MB)
-    └── 📁 Pilar_6_Peningkatan_Kualitas_Pelayanan_Publik/ (65 file - 86.2 MB)</div>
       </div>
     </div>
 
