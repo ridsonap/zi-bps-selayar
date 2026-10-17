@@ -1,20 +1,39 @@
 import json
-import re
 
 with open("data.json", "r", encoding="utf-8") as f:
     app_data = json.load(f)
 
-# Flatten indicators
-indicators = []
+# Score data
+scores = {
+    1: {"pemenuhan": 2.54, "reform": 4.00, "total": 6.54, "bobot": 8.00, "pct": "81.75%"},
+    2: {"pemenuhan": 3.38, "reform": 3.50, "total": 6.88, "bobot": 7.00, "pct": "98.29%"},
+    3: {"pemenuhan": 3.96, "reform": 3.50, "total": 7.46, "bobot": 10.00, "pct": "74.60%"},
+    4: {"pemenuhan": 5.00, "reform": 3.50, "total": 8.50, "bobot": 10.00, "pct": "85.00%"},
+    5: {"pemenuhan": 3.38, "reform": 7.50, "total": 10.88, "bobot": 15.00, "pct": "72.53%"},
+    6: {"pemenuhan": 3.95, "reform": 2.50, "total": 6.45, "bobot": 10.00, "pct": "64.50%"},
+}
+
+pilars_data = []
+all_points_flat = []
+
 for area in app_data["areas"]:
+    pilar_num = area["number"]
+    pilar_title = area["title"]
+    sc = scores.get(pilar_num, {"total": 0, "bobot": 0, "pct": "0%"})
+    
+    subpilars = []
+    
     # Pemenuhan
-    for grp in area["pemenuhan"]["groups"]:
+    for g_idx, grp in enumerate(area["pemenuhan"]["groups"]):
+        sp_id = f"sp_{pilar_num}_p_{g_idx}"
+        points = []
         for itm in grp["items"]:
-            indicators.append({
-                "areaNum": area["number"],
-                "areaTitle": area["title"],
+            pt_obj = {
+                "pilarNum": pilar_num,
+                "pilarTitle": pilar_title,
                 "aspect": "Pemenuhan",
-                "groupName": grp["name"],
+                "subPilarId": sp_id,
+                "subPilarName": grp["name"],
                 "code": itm["code"],
                 "question": itm["question"],
                 "tipe": itm.get("tipe", ""),
@@ -28,15 +47,28 @@ for area in app_data["areas"]:
                 "bukti": itm.get("bukti", []),
                 "link_contoh": itm.get("link_contoh", ""),
                 "drive_folder": itm.get("drive_folder", "")
-            })
+            }
+            points.append(pt_obj)
+            all_points_flat.append(pt_obj)
+            
+        subpilars.append({
+            "id": sp_id,
+            "aspect": "Pemenuhan",
+            "name": grp["name"],
+            "points": points
+        })
+        
     # Reform
-    for grp in area["reform"]["groups"]:
+    for g_idx, grp in enumerate(area["reform"]["groups"]):
+        sp_id = f"sp_{pilar_num}_r_{g_idx}"
+        points = []
         for itm in grp["items"]:
-            indicators.append({
-                "areaNum": area["number"],
-                "areaTitle": area["title"],
+            pt_obj = {
+                "pilarNum": pilar_num,
+                "pilarTitle": pilar_title,
                 "aspect": "Reform",
-                "groupName": grp["name"],
+                "subPilarId": sp_id,
+                "subPilarName": grp["name"],
                 "code": itm["code"],
                 "question": itm["question"],
                 "tipe": itm.get("tipe", ""),
@@ -50,34 +82,45 @@ for area in app_data["areas"]:
                 "bukti": itm.get("bukti", []),
                 "link_contoh": itm.get("link_contoh", ""),
                 "drive_folder": itm.get("drive_folder", "")
-            })
+            }
+            points.append(pt_obj)
+            all_points_flat.append(pt_obj)
+            
+        subpilars.append({
+            "id": sp_id,
+            "aspect": "Reform",
+            "name": grp["name"],
+            "points": points
+        })
+        
+    all_pts = [p for sp in subpilars for p in sp["points"]]
+    comp_pts = sum(1 for p in all_pts if p["status"] == "complete" and p["nilai"] in ["1.00", "1", "300.00%", "100.00%", "105.74%"])
+    att_pts = len(all_pts) - comp_pts
+    
+    pilars_data.append({
+        "number": pilar_num,
+        "title": pilar_title,
+        "scorePct": sc["pct"],
+        "totalScore": sc["total"],
+        "maxScore": sc["bobot"],
+        "totalPoints": len(all_pts),
+        "completePoints": comp_pts,
+        "attentionPoints": att_pts,
+        "subpilars": subpilars
+    })
 
-# Verify stats
-total_indicators = len(indicators)
-complete_indicators = sum(1 for x in indicators if x["status"] == "complete" and x["nilai"] in ["1.00", "1", "300.00%", "100.00%", "105.74%"])
-attention_indicators = total_indicators - complete_indicators
-print(f"Total: {total_indicators}, Complete: {complete_indicators}, Attention: {attention_indicators}")
+print(f"Hierarchical structure built: {len(pilars_data)} pilars, {sum(len(p['subpilars']) for p in pilars_data)} subpilars, {len(all_points_flat)} points.")
 
-# Count per area
-area_counts = {}
-for i in range(1, 7):
-    area_counts[i] = {
-        "total": sum(1 for x in indicators if x["areaNum"] == i),
-        "complete": sum(1 for x in indicators if x["areaNum"] == i and x["status"] == "complete" and x["nilai"] in ["1.00", "1", "300.00%", "100.00%", "105.74%"]),
-        "attention": sum(1 for x in indicators if x["areaNum"] == i and not (x["status"] == "complete" and x["nilai"] in ["1.00", "1", "300.00%", "100.00%", "105.74%"]))
-    }
-print("Area counts:", area_counts)
+pilars_json_str = json.dumps(pilars_data, ensure_ascii=False)
+flat_points_json_str = json.dumps(all_points_flat, ensure_ascii=False)
 
-# Now generate index.html cleanly
-data_json_str = json.dumps(indicators, ensure_ascii=False)
-
-html_content = '''<!DOCTYPE html>
+html_template = '''<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panduan Bukti Dukung ZI WBK 2025 | BPS Kabupaten Kepulauan Selayar</title>
-  <meta name="description" content="Sistem Panduan dan Kendali Bukti Dukung Lembar Kerja Evaluasi (LKE) Pembangunan Zona Integritas BPS Kabupaten Kepulauan Selayar.">
+  <meta name="description" content="Sistem Panduan Bukti Dukung Zona Integritas BPS Kabupaten Kepulauan Selayar dengan Struktur Hirarki Dropdown Pilar, Sub Pilar, dan Point Indikator.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏛️</text></svg>">
   <style>
     :root {
@@ -312,16 +355,16 @@ html_content = '''<!DOCTYPE html>
       display: block;
     }
 
-    /* FILTER BAR & DROPDOWNS */
+    /* FILTER BAR & CASCADING DROPDOWNS */
     .filter-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 14px;
-      margin-bottom: 16px;
+      padding: 16px;
+      margin-bottom: 18px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
     .search-box {
       position: relative;
@@ -352,27 +395,25 @@ html_content = '''<!DOCTYPE html>
       pointer-events: none;
     }
 
-    /* DROPDOWN CONTROLS ROW */
-    .dropdown-controls-row {
+    /* DROPDOWN SELECTS ROW */
+    .dropdown-selects-grid {
       display: grid;
-      grid-template-columns: 2fr 1.2fr auto;
+      grid-template-columns: 1.5fr 1.5fr 1fr;
       gap: 10px;
-      align-items: center;
     }
-    .dropdown-group {
+    .select-wrap {
       display: flex;
-      align-items: center;
-      gap: 6px;
+      flex-direction: column;
+      gap: 4px;
     }
-    .dropdown-label {
-      font-size: 0.72rem;
+    .select-label {
+      font-size: 0.7rem;
       font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      white-space: nowrap;
     }
-    .select-dropdown {
+    .select-input {
       width: 100%;
       padding: 8px 10px;
       border: 1px solid var(--border);
@@ -385,34 +426,33 @@ html_content = '''<!DOCTYPE html>
       outline: none;
       transition: all 0.15s ease;
     }
-    .select-dropdown:focus {
+    .select-input:focus {
       border-color: var(--border-focus);
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
     }
 
-    .dropdown-actions-row {
+    .filter-actions-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
       flex-wrap: wrap;
-      padding-top: 6px;
+      padding-top: 10px;
       border-top: 1px dashed var(--border);
     }
-    .btn-toggle-all {
+    .btn-toggle-tree {
       font-size: 0.75rem;
       font-weight: 600;
-      color: var(--text-muted);
+      color: var(--text);
       background: var(--bg);
       border: 1px solid var(--border);
-      padding: 5px 11px;
+      padding: 5px 12px;
       border-radius: var(--radius-sm);
       cursor: pointer;
       transition: all 0.15s;
     }
-    .btn-toggle-all:hover {
+    .btn-toggle-tree:hover {
       background: #e2e8f0;
-      color: var(--text);
     }
     .btn-reset-checks {
       font-size: 0.74rem;
@@ -428,7 +468,7 @@ html_content = '''<!DOCTYPE html>
       background: var(--danger-light);
     }
 
-    /* RESULT BAR */
+    /* RESULT INFO */
     .result-info {
       display: flex;
       justify-content: space-between;
@@ -439,57 +479,236 @@ html_content = '''<!DOCTYPE html>
       padding: 0 2px;
     }
 
-    /* DROPDOWN ACCORDION ITEM */
-    .ind-dropdown {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      margin-bottom: 8px;
-      overflow: hidden;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-    .ind-dropdown:hover {
-      border-color: #cbd5e1;
-    }
-    .ind-dropdown[open] {
-      border-color: #94a3b8;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-    }
-    .ind-dropdown.state-missing {
-      border-left: 4px solid var(--danger);
-    }
-    .ind-dropdown.state-partial {
-      border-left: 4px solid var(--warning);
-    }
-    .ind-dropdown.state-complete {
-      border-left: 4px solid var(--success);
+    /* ======================================================== */
+    /* 3-TIER ACCORDION DROPDOWNS: PILAR -> SUB PILAR -> POINT   */
+    /* ======================================================== */
+
+    .tree-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
-    /* SUMMARY / HEADER */
-    .ind-summary {
+    /* LEVEL 1: PILAR DROPDOWN */
+    .pilar-dropdown {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--primary);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .pilar-dropdown:hover {
+      border-color: #cbd5e1;
+    }
+    .pilar-dropdown[open] {
+      box-shadow: var(--shadow-sm);
+      border-color: #94a3b8;
+    }
+
+    .pilar-summary {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 14px;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+      gap: 12px;
+      background: #ffffff;
+      transition: background 0.15s;
+    }
+    .pilar-summary::-webkit-details-marker { display: none; }
+    .pilar-summary:hover {
+      background: #f8fafc;
+    }
+    .pilar-summary-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 1;
+    }
+    .pilar-badge {
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: var(--radius-sm);
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid var(--primary-border);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .pilar-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.25;
+    }
+    .pilar-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .pilar-summary-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .pilar-stat-pill {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      white-space: nowrap;
+    }
+    .stat-complete { background: var(--success-light); color: var(--success); }
+    .stat-attention { background: var(--warning-light); color: var(--warning); }
+    .pilar-score-pill {
+      font-size: 0.76rem;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: var(--radius-full);
+      background: var(--primary);
+      color: #ffffff;
+      white-space: nowrap;
+    }
+
+    .pilar-body {
+      padding: 6px 14px 14px 14px;
+      background: #f8fafc;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* LEVEL 2: SUB PILAR DROPDOWN */
+    .subpilar-dropdown {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      transition: all 0.15s ease;
+    }
+    .subpilar-dropdown[open] {
+      border-color: #cbd5e1;
+    }
+    .subpilar-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
       cursor: pointer;
       user-select: none;
       list-style: none;
       gap: 10px;
+      background: #f1f5f9;
+      transition: background 0.15s;
     }
-    .ind-summary::-webkit-details-marker {
-      display: none;
+    .subpilar-summary::-webkit-details-marker { display: none; }
+    .subpilar-summary:hover {
+      background: #e2e8f0;
     }
-    .ind-summary-left {
+    .subpilar-summary-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       min-width: 0;
       flex: 1;
     }
-    .code-tag {
+    .aspect-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: var(--radius-sm);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .aspect-pemenuhan {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .aspect-reform {
+      background: #f3e8ff;
+      color: #6b21a8;
+    }
+    .subpilar-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .subpilar-summary-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .subpilar-count {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .subpilar-body {
+      padding: 8px 10px 10px 10px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* LEVEL 3: POINT-POINT INDIKATOR DROPDOWN */
+    .point-dropdown {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      transition: all 0.15s ease;
+    }
+    .point-dropdown.state-complete {
+      border-left: 3.5px solid var(--success);
+    }
+    .point-dropdown.state-missing {
+      border-left: 3.5px solid var(--danger);
+    }
+    .point-dropdown.state-partial {
+      border-left: 3.5px solid var(--warning);
+    }
+    .point-dropdown[open] {
+      border-color: #94a3b8;
+    }
+
+    .point-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+      gap: 10px;
+      background: #ffffff;
+      transition: background 0.15s;
+    }
+    .point-summary::-webkit-details-marker { display: none; }
+    .point-summary:hover {
+      background: #f8fafc;
+    }
+    .point-summary-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+    .point-code {
       font-size: 0.72rem;
       font-weight: 800;
-      padding: 2px 7px;
+      padding: 2px 6px;
       border-radius: var(--radius-sm);
       background: var(--bg);
       color: var(--text);
@@ -497,130 +716,109 @@ html_content = '''<!DOCTYPE html>
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .ind-summary-title {
-      font-size: 0.88rem;
+    .point-question {
+      font-size: 0.82rem;
       font-weight: 700;
       color: var(--text);
       line-height: 1.35;
     }
-    .ind-summary-right {
+    .point-summary-right {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex-shrink: 0;
     }
-    .chevron-icon {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      transition: transform 0.2s ease;
-      display: inline-block;
-    }
-    .ind-dropdown[open] .chevron-icon {
-      transform: rotate(180deg);
-    }
-
-    /* DROPDOWN BODY */
-    .ind-body {
-      padding: 0 16px 16px 16px;
-      border-top: 1px dashed var(--border);
-      margin-top: 4px;
-      padding-top: 12px;
-    }
-    .area-tag {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
     .badge-status {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 700;
-      padding: 3px 10px;
+      padding: 2px 8px;
       border-radius: var(--radius-full);
       white-space: nowrap;
     }
     .badge-state-complete {
       background: var(--success-light);
       color: var(--success);
-      border: 1px solid var(--success-border);
     }
     .badge-state-missing {
       background: var(--danger-light);
       color: var(--danger);
-      border: 1px solid var(--danger-border);
     }
     .badge-state-partial {
       background: var(--warning-light);
       color: var(--warning);
-      border: 1px solid var(--warning-border);
     }
 
-    .ind-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text);
-      line-height: 1.4;
-      margin-bottom: 12px;
+    .chevron-icon {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+      display: inline-block;
+    }
+    details[open] > summary .chevron-icon {
+      transform: rotate(180deg);
     }
 
-    /* BUKTI LIST */
-    .ind-bukti-box {
+    /* POINT BODY CONTENT */
+    .point-body {
+      padding: 10px 14px 14px 14px;
+      border-top: 1px dashed var(--border);
+      background: #ffffff;
+    }
+
+    .point-bukti-box {
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 12px;
-      margin-bottom: 12px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
     }
-    .ind-bukti-top {
+    .point-bukti-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
-    .ind-bukti-list {
+    .point-bukti-list {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
-    .ind-bukti-item {
+    .point-bukti-item {
       display: flex;
       align-items: flex-start;
-      gap: 10px;
-      font-size: 0.82rem;
-      color: var(--text);
-      line-height: 1.4;
+      gap: 8px;
+      font-size: 0.8rem;
+      line-height: 1.35;
     }
-    .ind-check {
+    .point-check {
       cursor: pointer;
       margin-top: 2px;
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       accent-color: var(--success);
       flex-shrink: 0;
     }
-    .ind-bukti-item.checked label {
+    .point-bukti-item.checked label {
       text-decoration: line-through;
       color: var(--text-muted);
     }
 
-    /* NOTES BOX */
     .note-alert {
-      font-size: 0.78rem;
-      padding: 9px 12px;
+      font-size: 0.76rem;
+      padding: 8px 10px;
       border-radius: var(--radius-sm);
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       display: flex;
       align-items: flex-start;
-      gap: 8px;
+      gap: 6px;
       line-height: 1.4;
     }
     .note-alert-danger {
@@ -634,29 +832,20 @@ html_content = '''<!DOCTYPE html>
       border: 1px solid var(--warning-border);
     }
 
-    /* ACTION BUTTONS */
-    .ind-actions {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-      padding-top: 10px;
-      border-top: 1px solid var(--border);
-    }
-    .ind-btn-group {
+    .point-actions {
       display: flex;
       align-items: center;
       gap: 6px;
       flex-wrap: wrap;
+      margin-bottom: 10px;
     }
     .btn-action {
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      padding: 6px 10px;
+      padding: 5px 9px;
       border-radius: var(--radius-sm);
-      font-size: 0.76rem;
+      font-size: 0.75rem;
       font-weight: 600;
       border: 1px solid var(--border);
       background: var(--surface);
@@ -677,36 +866,11 @@ html_content = '''<!DOCTYPE html>
       background: var(--primary);
       color: #ffffff;
     }
-    .btn-detail-link {
-      background: transparent;
-      border: none;
-      font-size: 0.76rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      padding: 6px 8px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .btn-detail-link:hover {
-      color: var(--text);
-    }
 
-    /* ACCORDION DETAIL */
-    .ind-detail {
-      display: none;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px dashed var(--border);
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-    .ind-detail.open {
-      display: block;
-    }
     .detail-section {
-      margin-bottom: 8px;
+      font-size: 0.78rem;
+      line-height: 1.4;
+      color: var(--text-muted);
     }
     .detail-section-title {
       font-weight: 700;
@@ -824,7 +988,6 @@ html_content = '''<!DOCTYPE html>
       color: var(--text);
     }
     .text-center { text-align: center; }
-    .text-right { text-align: right; }
 
     /* EMPTY STATE */
     .empty-box {
@@ -876,9 +1039,13 @@ html_content = '''<!DOCTYPE html>
       .hero-title { font-size: 1.15rem; }
       .stats-row { grid-template-columns: 1fr 1fr; }
       .tabs-nav { top: 0; }
-      .dropdown-controls-row { grid-template-columns: 1fr; }
-      .ind-summary { flex-direction: column; align-items: flex-start; gap: 8px; }
-      .ind-summary-right { width: 100%; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 6px; }
+      .dropdown-selects-grid { grid-template-columns: 1fr; }
+      .pilar-summary { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .pilar-summary-right { width: 100%; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 6px; }
+      .subpilar-summary { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .subpilar-summary-right { width: 100%; justify-content: space-between; }
+      .point-summary { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .point-summary-right { width: 100%; justify-content: space-between; border-top: 1px dashed var(--border); padding-top: 4px; }
     }
     @media (max-width: 480px) {
       .stats-row { grid-template-columns: 1fr; }
@@ -909,7 +1076,7 @@ html_content = '''<!DOCTYPE html>
   <section class="hero">
     <div class="container">
       <h1 class="hero-title">Panduan Penyusunan Bukti Dukung Zona Integritas</h1>
-      <p class="hero-desc">Pusat kendali, format dokumen baku, dan kontrol kelengkapan LKE 2025 BPS Kabupaten Kepulauan Selayar.</p>
+      <p class="hero-desc">Pusat kendali bukti dukung LKE 2025 BPS Kabupaten Kepulauan Selayar terstruktur: <strong>Pilar &rarr; Sub Pilar &rarr; Point-point Indikator</strong>.</p>
 
       <div class="stats-row">
         <!-- Skor Mandiri -->
@@ -938,10 +1105,10 @@ html_content = '''<!DOCTYPE html>
 
         <!-- Indikator Lengkap -->
         <div class="stat-box">
-          <div class="stat-label">Indikator Lengkap</div>
+          <div class="stat-label">Point Lengkap</div>
           <div class="stat-num-row">
-            <span class="stat-num" style="color: var(--success);" id="topStatComplete">75</span>
-            <span class="stat-note">dari 110 indikator</span>
+            <span class="stat-num" style="color: var(--success);">75</span>
+            <span class="stat-note">dari 110 point</span>
           </div>
           <div class="stat-bar-bg">
             <div class="stat-bar-fill" style="width: 68.2%; background: var(--success);"></div>
@@ -952,7 +1119,7 @@ html_content = '''<!DOCTYPE html>
         <div class="stat-box">
           <div class="stat-label">Perlu Dilengkapi</div>
           <div class="stat-num-row">
-            <span class="stat-num" style="color: var(--warning);" id="topStatAttention">35</span>
+            <span class="stat-num" style="color: var(--warning);">35</span>
             <span class="stat-note">prioritas tindak lanjut</span>
           </div>
           <div class="stat-bar-bg">
@@ -967,7 +1134,7 @@ html_content = '''<!DOCTYPE html>
   <div class="tabs-nav">
     <div class="container">
       <nav class="tabs-scroll" aria-label="Navigasi Utama">
-        <button type="button" class="tab-btn active" data-tab="bukti" onclick="switchTab('bukti')">📑 Bukti Dukung (110)</button>
+        <button type="button" class="tab-btn active" data-tab="bukti" onclick="switchTab('bukti')">📑 Bukti Dukung (6 Pilar)</button>
         <button type="button" class="tab-btn" data-tab="template" onclick="switchTab('template')">📥 Format &amp; Template (11)</button>
         <button type="button" class="tab-btn" data-tab="rekap" onclick="switchTab('rekap')">📊 Rekap Nilai LKE</button>
         <button type="button" class="tab-btn" data-tab="drive" onclick="switchTab('drive')">📁 Struktur Google Drive</button>
@@ -988,50 +1155,58 @@ html_content = '''<!DOCTYPE html>
           <input type="text" id="searchInput" class="search-input" placeholder="Cari bukti dukung, SOP, SK, notula, kode (misal: 1.a), atau kata kunci..." oninput="onSearchChange(this.value)">
         </div>
 
-        <!-- Dropdown Controls Row -->
-        <div class="dropdown-controls-row">
-          <div class="dropdown-group">
-            <span class="dropdown-label">Area:</span>
-            <select id="areaDropdown" class="select-dropdown" onchange="setArea(this.value)">
-              <option value="all">🏢 Semua Area Perubahan (110 Indikator)</option>
-              <option value="1">1. Manajemen Perubahan (16)</option>
-              <option value="2">2. Penataan Tatalaksana (15)</option>
-              <option value="3">3. Penataan Sistem Manajemen SDM (21)</option>
-              <option value="4">4. Penguatan Akuntabilitas Kinerja (14)</option>
-              <option value="5">5. Penguatan Pengawasan (22)</option>
-              <option value="6">6. Peningkatan Kualitas Pelayanan Publik (22)</option>
+        <!-- Cascading Select Dropdowns: Pilar -> Sub Pilar -> Status -->
+        <div class="dropdown-selects-grid">
+          <div class="select-wrap">
+            <label for="selectPilar" class="select-label">1. Pilih Pilar (Area):</label>
+            <select id="selectPilar" class="select-input" onchange="onPilarSelect(this.value)">
+              <option value="all">🏢 Semua Pilar (1 s/d 6)</option>
+              <option value="1">Pilar 1: Manajemen Perubahan (16 Point)</option>
+              <option value="2">Pilar 2: Penataan Tatalaksana (15 Point)</option>
+              <option value="3">Pilar 3: Penataan Sistem Manajemen SDM (21 Point)</option>
+              <option value="4">Pilar 4: Penguatan Akuntabilitas Kinerja (14 Point)</option>
+              <option value="5">Pilar 5: Penguatan Pengawasan (22 Point)</option>
+              <option value="6">Pilar 6: Peningkatan Kualitas Pelayanan Publik (22 Point)</option>
             </select>
           </div>
 
-          <div class="dropdown-group">
-            <span class="dropdown-label">Status:</span>
-            <select id="statusDropdown" class="select-dropdown" onchange="setStatus(this.value)">
+          <div class="select-wrap">
+            <label for="selectSubPilar" class="select-label">2. Pilih Sub Pilar:</label>
+            <select id="selectSubPilar" class="select-input" onchange="onSubPilarSelect(this.value)">
+              <option value="all">📁 Semua Sub Pilar</option>
+            </select>
+          </div>
+
+          <div class="select-wrap">
+            <label for="selectStatus" class="select-label">3. Status Point:</label>
+            <select id="selectStatus" class="select-input" onchange="onStatusSelect(this.value)">
               <option value="all">🔍 Semua Status</option>
-              <option value="attention">⚠️ Perlu Dilengkapi (35)</option>
-              <option value="complete">✅ Lengkap (75)</option>
+              <option value="attention">⚠️ Perlu Dilengkapi (35 Point)</option>
+              <option value="complete">✅ Lengkap (75 Point)</option>
             </select>
-          </div>
-
-          <div class="dropdown-group" style="justify-content: flex-end;">
-            <button type="button" class="btn-toggle-all" onclick="toggleAllDropdowns(true)" title="Buka semua dropdown indikator">▼ Buka Semua</button>
-            <button type="button" class="btn-toggle-all" onclick="toggleAllDropdowns(false)" title="Tutup semua dropdown indikator">▲ Tutup Semua</button>
           </div>
         </div>
 
-        <div class="dropdown-actions-row">
-          <span style="font-size: 0.75rem; color: var(--text-muted);">💡 Klik baris indikator untuk membuka/menutup rincian bukti dukung &amp; berkas.</span>
-          <button type="button" class="btn-reset-checks" onclick="resetChecks()" title="Reset semua tanda centang verifikasi checklist">🔄 Reset Centang</button>
+        <div class="filter-actions-row">
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button type="button" class="btn-toggle-tree" onclick="toggleAllLevels(true)" title="Buka seluruh pilar, sub pilar, dan point">▼ Buka Semua</button>
+            <button type="button" class="btn-toggle-tree" onclick="toggleAllLevels(false)" title="Tutup semua dropdown ke tingkat terluar">▲ Tutup Semua</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 0.74rem; color: var(--text-muted);" id="checkedCount">0 berkas dicentang</span>
+            <button type="button" class="btn-reset-checks" onclick="resetChecks()" title="Reset semua tanda centang verifikasi checklist">🔄 Reset Centang</button>
+          </div>
         </div>
       </div>
 
       <!-- Result Info -->
       <div class="result-info">
-        <span id="resultCount">Menampilkan 110 indikator</span>
-        <span id="checkedCount">0 berkas dicentang</span>
+        <span id="resultCount">Menampilkan 6 Pilar, 42 Sub Pilar, 110 Point</span>
+        <span style="font-size: 0.74rem; color: var(--text-muted);">💡 Klik baris untuk membuka dropdown hirarki</span>
       </div>
 
-      <!-- Indicators List -->
-      <div id="indicatorsContainer"></div>
+      <!-- 3-TIER HIERARCHICAL TREE CONTAINER -->
+      <div id="treeContainer" class="tree-container"></div>
     </div>
 
     <!-- TAB 2: FORMAT & TEMPLATE -->
@@ -1198,7 +1373,7 @@ html_content = '''<!DOCTYPE html>
             <thead>
               <tr>
                 <th style="width: 40px;" class="text-center">No</th>
-                <th>Area Perubahan</th>
+                <th>Pilar / Area Perubahan</th>
                 <th style="width: 80px;" class="text-center">Bobot</th>
                 <th style="width: 100px;" class="text-center">Pemenuhan</th>
                 <th style="width: 90px;" class="text-center">Reform</th>
@@ -1209,7 +1384,7 @@ html_content = '''<!DOCTYPE html>
             <tbody>
               <tr>
                 <td class="text-center">1</td>
-                <td><strong>Manajemen Perubahan</strong></td>
+                <td><strong>Pilar 1: Manajemen Perubahan</strong></td>
                 <td class="text-center">8.00</td>
                 <td class="text-center">2.54</td>
                 <td class="text-center">4.00</td>
@@ -1218,7 +1393,7 @@ html_content = '''<!DOCTYPE html>
               </tr>
               <tr>
                 <td class="text-center">2</td>
-                <td><strong>Penataan Tatalaksana</strong></td>
+                <td><strong>Pilar 2: Penataan Tatalaksana</strong></td>
                 <td class="text-center">7.00</td>
                 <td class="text-center">3.38</td>
                 <td class="text-center">3.50</td>
@@ -1227,7 +1402,7 @@ html_content = '''<!DOCTYPE html>
               </tr>
               <tr>
                 <td class="text-center">3</td>
-                <td><strong>Penataan Sistem Manajemen SDM</strong></td>
+                <td><strong>Pilar 3: Penataan Sistem Manajemen SDM</strong></td>
                 <td class="text-center">10.00</td>
                 <td class="text-center">3.96</td>
                 <td class="text-center">3.50</td>
@@ -1236,7 +1411,7 @@ html_content = '''<!DOCTYPE html>
               </tr>
               <tr>
                 <td class="text-center">4</td>
-                <td><strong>Penguatan Akuntabilitas Kinerja</strong></td>
+                <td><strong>Pilar 4: Penguatan Akuntabilitas Kinerja</strong></td>
                 <td class="text-center">10.00</td>
                 <td class="text-center">5.00</td>
                 <td class="text-center">3.50</td>
@@ -1245,7 +1420,7 @@ html_content = '''<!DOCTYPE html>
               </tr>
               <tr>
                 <td class="text-center">5</td>
-                <td><strong>Penguatan Pengawasan</strong></td>
+                <td><strong>Pilar 5: Penguatan Pengawasan</strong></td>
                 <td class="text-center">15.00</td>
                 <td class="text-center">3.38</td>
                 <td class="text-center">7.50</td>
@@ -1254,7 +1429,7 @@ html_content = '''<!DOCTYPE html>
               </tr>
               <tr>
                 <td class="text-center">6</td>
-                <td><strong>Peningkatan Kualitas Pelayanan Publik</strong></td>
+                <td><strong>Pilar 6: Peningkatan Kualitas Pelayanan Publik</strong></td>
                 <td class="text-center">10.00</td>
                 <td class="text-center">3.95</td>
                 <td class="text-center">2.50</td>
@@ -1347,12 +1522,14 @@ html_content = '''<!DOCTYPE html>
   </footer>
 
   <script>
-    // Flat dataset
-    const DATA = ''' + data_json_str + ''';
+    // Hierarchical dataset: Pilar -> Sub Pilar -> Points
+    const PILARS = ''' + pilars_json_str + ''';
+    const ALL_POINTS = ''' + flat_points_json_str + ''';
 
     // State
-    let activeArea = 'all';
-    let activeStatus = 'all';
+    let selectedPilar = 'all';
+    let selectedSubPilar = 'all';
+    let selectedStatus = 'all';
     let searchQuery = '';
     let checks = JSON.parse(localStorage.getItem('zi_checks_selayar') || '{}');
 
@@ -1367,39 +1544,78 @@ html_content = '''<!DOCTYPE html>
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // Filters
-    function setArea(num) {
-      activeArea = num;
-      const el = document.getElementById('areaDropdown');
-      if (el && el.value !== num) el.value = num;
-      renderList();
-    }
+    // Populate Sub Pilar options based on chosen Pilar
+    function updateSubPilarOptions() {
+      const spSelect = document.getElementById('selectSubPilar');
+      if (!spSelect) return;
 
-    function setStatus(st) {
-      activeStatus = st;
-      const el = document.getElementById('statusDropdown');
-      if (el && el.value !== st) el.value = st;
-      renderList();
-    }
+      spSelect.innerHTML = '<option value="all">📁 Semua Sub Pilar</option>';
+      
+      let candidateSubpilars = [];
+      if (selectedPilar === 'all') {
+        PILARS.forEach(p => {
+          p.subpilars.forEach(sp => candidateSubpilars.push({ pilar: p.number, ...sp }));
+        });
+      } else {
+        const p = PILARS.find(x => String(x.number) === selectedPilar);
+        if (p) {
+          p.subpilars.forEach(sp => candidateSubpilars.push({ pilar: p.number, ...sp }));
+        }
+      }
 
-    function toggleAllDropdowns(open) {
-      document.querySelectorAll('.ind-dropdown').forEach(d => {
-        d.open = open;
+      candidateSubpilars.forEach(sp => {
+        const opt = document.createElement('option');
+        opt.value = sp.id;
+        const prefix = selectedPilar === 'all' ? `[Pilar ${sp.pilar}] ` : '';
+        opt.textContent = `${prefix}${sp.aspect}: ${sp.name} (${sp.points.length} pt)`;
+        spSelect.appendChild(opt);
       });
+
+      spSelect.value = selectedSubPilar;
+      // If previous value no longer exists, reset to 'all'
+      if (spSelect.value !== selectedSubPilar) {
+        selectedSubPilar = 'all';
+        spSelect.value = 'all';
+      }
+    }
+
+    // Filter handlers
+    function onPilarSelect(pNum) {
+      selectedPilar = pNum;
+      selectedSubPilar = 'all';
+      updateSubPilarOptions();
+      renderTree();
+    }
+
+    function onSubPilarSelect(spId) {
+      selectedSubPilar = spId;
+      renderTree();
+    }
+
+    function onStatusSelect(st) {
+      selectedStatus = st;
+      renderTree();
     }
 
     function onSearchChange(val) {
       searchQuery = (val || '').toLowerCase().trim();
-      renderList();
+      renderTree();
     }
 
-    // Toggle Checklist
+    // Toggle All Levels
+    function toggleAllLevels(open) {
+      document.querySelectorAll('.pilar-dropdown').forEach(d => d.open = open);
+      document.querySelectorAll('.subpilar-dropdown').forEach(d => d.open = open);
+      document.querySelectorAll('.point-dropdown').forEach(d => d.open = open);
+    }
+
+    // Checklist toggles
     function toggleCheck(id) {
       const cb = document.getElementById(id);
       if (cb) {
         checks[id] = cb.checked;
         localStorage.setItem('zi_checks_selayar', JSON.stringify(checks));
-        const item = cb.closest('.ind-bukti-item');
+        const item = cb.closest('.point-bukti-item');
         if (item) item.classList.toggle('checked', cb.checked);
         updateCheckedCounter();
       }
@@ -1409,7 +1625,7 @@ html_content = '''<!DOCTYPE html>
       if (confirm('Hapus semua tanda centang verifikasi checklist bukti dukung?')) {
         checks = {};
         localStorage.removeItem('zi_checks_selayar');
-        renderList();
+        renderTree();
         showToast('Semua centang verifikasi berhasil direset');
       }
     }
@@ -1430,7 +1646,7 @@ html_content = '''<!DOCTYPE html>
 
     // Copy Bukti
     function copyBukti(code) {
-      const itm = DATA.find(x => x.code === code);
+      const itm = ALL_POINTS.find(x => x.code === code);
       if (!itm) return;
       const lines = ['Bukti Dukung Indikator ' + code + ' (' + itm.question + ') - BPS Selayar:'];
       (itm.bukti || []).forEach(b => lines.push('• ' + b));
@@ -1441,184 +1657,251 @@ html_content = '''<!DOCTYPE html>
       });
     }
 
-    // Toggle Detail
-    function toggleDetail(code) {
-      const safe = code.replace(/[^a-zA-Z0-9]/g, '_');
-      const detail = document.getElementById('detail-' + safe);
-      const btn = document.getElementById('btn-detail-' + safe);
-      if (detail && btn) {
-        const isOpen = detail.classList.contains('open');
-        detail.classList.toggle('open');
-        btn.innerHTML = isOpen ? '<span>ℹ️</span> Kriteria &amp; Narasi' : '<span>✕</span> Tutup';
-      }
-    }
-
-    // Render list
-    function renderList() {
-      const container = document.getElementById('indicatorsContainer');
+    // Render 3-Tier Tree
+    function renderTree() {
+      const container = document.getElementById('treeContainer');
       if (!container) return;
 
-      const filtered = DATA.filter(itm => {
-        // Area filter
-        if (activeArea !== 'all' && String(itm.areaNum) !== activeArea) return false;
-
-        // Status filter
-        const isComp = itm.status === 'complete' && ['1.00', '1', '300.00%', '100.00%', '105.74%'].includes(itm.nilai);
-        if (activeStatus === 'complete' && !isComp) return false;
-        if (activeStatus === 'attention' && isComp) return false;
-
-        // Search
-        if (searchQuery) {
-          const text = [
-            itm.code,
-            itm.question,
-            itm.areaTitle,
-            itm.catatan,
-            itm.narasi,
-            ...(itm.bukti || [])
-          ].join(' ').toLowerCase();
-          if (!text.includes(searchQuery)) return false;
-        }
-
-        return true;
-      });
-
-      // Update result count text
-      document.getElementById('resultCount').textContent = 'Menampilkan ' + filtered.length + ' dari ' + DATA.length + ' indikator';
-      updateCheckedCounter();
-
-      if (filtered.length === 0) {
-        container.innerHTML = `
-          <div class="empty-box">
-            <div style="font-size: 1.8rem; margin-bottom: 6px;">🔍</div>
-            <div style="font-weight: 700; color: var(--text); margin-bottom: 4px;">Tidak ada indikator yang sesuai</div>
-            <div style="font-size: 0.8rem;">Coba ubah kata kunci pencarian atau sesuaikan filter status/area.</div>
-          </div>
-        `;
-        return;
-      }
+      const hasSearch = searchQuery.length > 0;
+      let totalVisiblePoints = 0;
+      let totalVisibleSubpilars = 0;
+      let totalVisiblePilars = 0;
 
       let html = '';
-      filtered.forEach(itm => {
-        const safe = itm.code.replace(/[^a-zA-Z0-9]/g, '_');
-        const isComp = itm.status === 'complete' && ['1.00', '1', '300.00%', '100.00%', '105.74%'].includes(itm.nilai);
-        const isMiss = itm.status === 'missing' || itm.nilai === '0.00';
 
-        const cardState = isMiss ? 'state-missing' : (isComp ? 'state-complete' : 'state-partial');
-        const badgeState = isMiss ? 'badge-state-missing' : (isComp ? 'badge-state-complete' : 'badge-state-partial');
+      PILARS.forEach(pilar => {
+        // Filter Pilar
+        if (selectedPilar !== 'all' && String(pilar.number) !== selectedPilar) {
+          return;
+        }
 
-        let badgeText = isMiss ? '⚠️ Perlu Dilengkapi (0.00)' : (isComp ? '✅ Lengkap (1.00)' : '🟡 Sebagian (' + itm.nilai + ')');
-        if (itm.nilai === '105.74%') badgeText = '✅ Capaian 105.74%';
-        if (itm.nilai === '300.00%') badgeText = '✅ Capaian 300%';
+        let pilarPointsCount = 0;
+        let subpilarsHtml = '';
 
-        // Bukti items
-        let buktiRows = '';
-        if (itm.bukti && itm.bukti.length > 0) {
-          buktiRows = itm.bukti.map((b, idx) => {
-            const checkId = 'chk_' + itm.areaNum + '_' + safe + '_' + idx;
-            const checked = !!checks[checkId];
-            return `
-              <li class="ind-bukti-item ${checked ? 'checked' : ''}">
-                <input type="checkbox" id="${checkId}" class="ind-check" ${checked ? 'checked' : ''} onchange="toggleCheck('${checkId}')">
-                <label for="${checkId}" style="cursor: pointer; flex: 1;">${b}</label>
-              </li>
+        pilar.subpilars.forEach(sp => {
+          // Filter Sub Pilar
+          if (selectedSubPilar !== 'all' && sp.id !== selectedSubPilar) {
+            return;
+          }
+
+          // Filter Points inside Sub Pilar
+          const filteredPoints = sp.points.filter(pt => {
+            // Status filter
+            const isComp = pt.status === 'complete' && ['1.00', '1', '300.00%', '100.00%', '105.74%'].includes(pt.nilai);
+            if (selectedStatus === 'complete' && !isComp) return false;
+            if (selectedStatus === 'attention' && isComp) return false;
+
+            // Search filter
+            if (hasSearch) {
+              const text = [
+                pt.code,
+                pt.question,
+                pt.subPilarName,
+                pt.pilarTitle,
+                pt.catatan,
+                pt.narasi,
+                ...(pt.bukti || [])
+              ].join(' ').toLowerCase();
+              if (!text.includes(searchQuery)) return false;
+            }
+
+            return true;
+          });
+
+          if (filteredPoints.length === 0) return;
+
+          pilarPointsCount += filteredPoints.length;
+          totalVisiblePoints += filteredPoints.length;
+          totalVisibleSubpilars++;
+
+          // Build Points HTML (Level 3)
+          let pointsHtml = '';
+          filteredPoints.forEach(pt => {
+            const safe = pt.code.replace(/[^a-zA-Z0-9]/g, '_');
+            const isComp = pt.status === 'complete' && ['1.00', '1', '300.00%', '100.00%', '105.74%'].includes(pt.nilai);
+            const isMiss = pt.status === 'missing' || pt.nilai === '0.00';
+
+            const cardState = isMiss ? 'state-missing' : (isComp ? 'state-complete' : 'state-partial');
+            const badgeState = isMiss ? 'badge-state-missing' : (isComp ? 'badge-state-complete' : 'badge-state-partial');
+
+            let badgeText = isMiss ? '⚠️ Perlu Dilengkapi (0.00)' : (isComp ? '✅ Lengkap (1.00)' : '🟡 Sebagian (' + pt.nilai + ')');
+            if (pt.nilai === '105.74%') badgeText = '✅ Capaian 105.74%';
+            if (pt.nilai === '300.00%') badgeText = '✅ Capaian 300%';
+
+            // Bukti list
+            let buktiRows = '';
+            if (pt.bukti && pt.bukti.length > 0) {
+              buktiRows = pt.bukti.map((b, idx) => {
+                const checkId = 'chk_' + pt.pilarNum + '_' + safe + '_' + idx;
+                const checked = !!checks[checkId];
+                return `
+                  <li class="point-bukti-item ${checked ? 'checked' : ''}">
+                    <input type="checkbox" id="${checkId}" class="point-check" ${checked ? 'checked' : ''} onchange="toggleCheck('${checkId}')">
+                    <label for="${checkId}" style="cursor: pointer; flex: 1;">${b}</label>
+                  </li>
+                `;
+              }).join('');
+            } else {
+              buktiRows = '<li class="point-bukti-item" style="color: var(--text-muted); font-style: italic;">Tidak ada dokumen khusus tercatat</li>';
+            }
+
+            // Note alert
+            let noteHtml = '';
+            if (pt.catatan) {
+              const isDanger = pt.nilai === '0.00';
+              noteHtml = `
+                <div class="note-alert ${isDanger ? 'note-alert-danger' : 'note-alert-warning'}">
+                  <span>⚠️</span>
+                  <div>${pt.catatan}</div>
+                </div>
+              `;
+            }
+
+            // Link contoh
+            let linkContohBtn = '';
+            if (pt.link_contoh) {
+              linkContohBtn = `
+                <a href="${pt.link_contoh}" target="_blank" rel="noopener noreferrer" class="btn-action btn-action-primary" title="Lihat contoh format resmi BPS Pusat">
+                  <span>🔗</span><span>Contoh Pusat</span>
+                </a>
+              `;
+            }
+
+            // Open point if searching
+            const isPointOpen = hasSearch;
+
+            pointsHtml += `
+              <details class="point-dropdown ${cardState}" id="point-${safe}" ${isPointOpen ? 'open' : ''}>
+                <summary class="point-summary">
+                  <div class="point-summary-left">
+                    <span class="point-code">${pt.code}</span>
+                    <span class="point-question">${pt.question}</span>
+                  </div>
+                  <div class="point-summary-right">
+                    <span class="badge-status ${badgeState}">${badgeText}</span>
+                    <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">${(pt.bukti || []).length} berkas</span>
+                    <span class="chevron-icon">▼</span>
+                  </div>
+                </summary>
+
+                <div class="point-body">
+                  <div class="point-bukti-box">
+                    <div class="point-bukti-top">
+                      <span>Daftar Bukti Dukung yang Wajib Diunggah:</span>
+                      <span style="font-size: 0.68rem; text-transform: none;">centang jika siap</span>
+                    </div>
+                    <ul class="point-bukti-list">
+                      ${buktiRows}
+                    </ul>
+                  </div>
+
+                  ${noteHtml}
+
+                  <div class="point-actions">
+                    <a href="https://drive.google.com/drive/folders/16lT-0q81UKuSPrtD-_UGcEj4Nh2Jms_3?usp=sharing" target="_blank" rel="noopener noreferrer" class="btn-action" title="Folder Drive: ${pt.drive_folder || 'Root'}">
+                      <span>📁</span><span>Folder Drive</span>
+                    </a>
+                    ${linkContohBtn}
+                    <button type="button" class="btn-action" onclick="copyBukti('${pt.code}')">
+                      <span>📋</span><span>Salin Berkas</span>
+                    </button>
+                  </div>
+
+                  <div class="detail-section">
+                    <div class="detail-section-title">Kriteria Penilaian:</div>
+                    <div style="white-space: pre-line;">${pt.kriteria || '-'}</div>
+                  </div>
+                  <div class="detail-section" style="margin-top: 6px;">
+                    <span class="detail-section-title">Jawaban &amp; Nilai Satker:</span>
+                    <span>Jawaban: <strong>${pt.jawaban || '-'}</strong> (Nilai: <strong>${pt.nilai}</strong>)</span>
+                  </div>
+                  ${pt.narasi ? `
+                    <div class="detail-section" style="margin-top: 6px;">
+                      <div class="detail-section-title">Narasi / Catatan Satker:</div>
+                      <div style="font-style: italic; background: var(--bg); padding: 6px 10px; border-radius: var(--radius-sm); border-left: 2px solid var(--border);">${pt.narasi}</div>
+                    </div>
+                  ` : ''}
+                </div>
+              </details>
             `;
-          }).join('');
-        } else {
-          buktiRows = '<li class="ind-bukti-item" style="color: var(--text-muted); font-style: italic;">Tidak ada dokumen khusus tercatat</li>';
-        }
+          });
 
-        // Catatan box
-        let noteHtml = '';
-        if (itm.catatan) {
-          const isDanger = itm.nilai === '0.00';
-          noteHtml = `
-            <div class="note-alert ${isDanger ? 'note-alert-danger' : 'note-alert-warning'}">
-              <span>⚠️</span>
-              <div>${itm.catatan}</div>
-            </div>
+          // Open subpilar if search or specific subpilar chosen
+          const isSubPilarOpen = hasSearch || selectedSubPilar !== 'all';
+          const aspectClass = sp.aspect === 'Pemenuhan' ? 'aspect-pemenuhan' : 'aspect-reform';
+
+          subpilarsHtml += `
+            <details class="subpilar-dropdown" id="subpilar-${sp.id}" ${isSubPilarOpen ? 'open' : ''}>
+              <summary class="subpilar-summary">
+                <div class="subpilar-summary-left">
+                  <span class="aspect-badge ${aspectClass}">${sp.aspect}</span>
+                  <span class="subpilar-title">${sp.name}</span>
+                </div>
+                <div class="subpilar-summary-right">
+                  <span class="subpilar-count">${filteredPoints.length} Point</span>
+                  <span class="chevron-icon">▼</span>
+                </div>
+              </summary>
+              <div class="subpilar-body">
+                ${pointsHtml}
+              </div>
+            </details>
           `;
-        }
+        });
 
-        // Link contoh
-        let linkContohBtn = '';
-        if (itm.link_contoh) {
-          linkContohBtn = `
-            <a href="${itm.link_contoh}" target="_blank" rel="noopener noreferrer" class="btn-action btn-action-primary" title="Lihat contoh format resmi BPS Pusat">
-              <span>🔗</span><span>Contoh Pusat</span>
-            </a>
-          `;
-        }
+        if (pilarPointsCount === 0) return;
 
-        const isOpen = searchQuery.length > 0;
+        totalVisiblePilars++;
+
+        // Open pilar if search or specific pilar chosen
+        const isPilarOpen = hasSearch || selectedPilar !== 'all';
 
         html += `
-          <details class="ind-dropdown ${cardState}" id="drop-${safe}" ${isOpen ? 'open' : ''}>
-            <summary class="ind-summary">
-              <div class="ind-summary-left">
-                <span class="code-tag">${itm.code}</span>
+          <details class="pilar-dropdown" id="pilar-${pilar.number}" ${isPilarOpen ? 'open' : ''}>
+            <summary class="pilar-summary">
+              <div class="pilar-summary-left">
+                <span class="pilar-badge">PILAR ${pilar.number}</span>
                 <div>
-                  <div class="ind-summary-title">${itm.question}</div>
-                  <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">Area ${itm.areaNum}: ${itm.areaTitle} • ${itm.aspect}</div>
+                  <div class="pilar-title">${pilar.title}</div>
+                  <div class="pilar-sub">${pilar.subpilars.length} Sub Pilar • ${pilar.totalPoints} Point Bukti Dukung</div>
                 </div>
               </div>
-              <div class="ind-summary-right">
-                <span class="badge-status ${badgeState}">${badgeText}</span>
-                <span style="font-size: 0.74rem; color: var(--text-muted); font-weight: 600;">${(itm.bukti || []).length} berkas</span>
+              <div class="pilar-summary-right">
+                <span class="pilar-stat-pill stat-complete">${pilar.completePoints} Lengkap</span>
+                <span class="pilar-stat-pill stat-attention">${pilar.attentionPoints} Perlu Dilengkapi</span>
+                <span class="pilar-score-pill">${pilar.scorePct}</span>
                 <span class="chevron-icon">▼</span>
               </div>
             </summary>
-
-            <div class="ind-body">
-              <div class="ind-bukti-box">
-                <div class="ind-bukti-top">
-                  <span>Bukti Dukung yang Wajib Diunggah:</span>
-                  <span style="font-size: 0.68rem; text-transform: none;">centang jika siap</span>
-                </div>
-                <ul class="ind-bukti-list">
-                  ${buktiRows}
-                </ul>
-              </div>
-
-              ${noteHtml}
-
-              <div class="ind-actions" style="margin-bottom: 12px;">
-                <div class="ind-btn-group">
-                  <a href="https://drive.google.com/drive/folders/16lT-0q81UKuSPrtD-_UGcEj4Nh2Jms_3?usp=sharing" target="_blank" rel="noopener noreferrer" class="btn-action" title="Folder Drive: ${itm.drive_folder || 'Root'}">
-                    <span>📁</span><span>Folder Drive</span>
-                  </a>
-                  ${linkContohBtn}
-                  <button type="button" class="btn-action" onclick="copyBukti('${itm.code}')">
-                    <span>📋</span><span>Salin Berkas</span>
-                  </button>
-                </div>
-              </div>
-
-              <div class="detail-section">
-                <div class="detail-section-title">Kriteria Penilaian:</div>
-                <div style="white-space: pre-line; font-size: 0.8rem; color: var(--text-muted);">${itm.kriteria || '-'}</div>
-              </div>
-              <div class="detail-section" style="margin-top: 6px; font-size: 0.8rem;">
-                <span class="detail-section-title">Jawaban &amp; Nilai Satker:</span>
-                <span>Jawaban: <strong>${itm.jawaban || '-'}</strong> (Nilai: <strong>${itm.nilai}</strong>)</span>
-              </div>
-              ${itm.narasi ? `
-                <div class="detail-section" style="margin-top: 6px;">
-                  <div class="detail-section-title">Narasi / Catatan Satker:</div>
-                  <div style="font-style: italic; font-size: 0.8rem; background: var(--bg); padding: 8px 10px; border-radius: var(--radius-sm); border-left: 2px solid var(--border); color: var(--text-muted);">${itm.narasi}</div>
-                </div>
-              ` : ''}
+            <div class="pilar-body">
+              ${subpilarsHtml}
             </div>
           </details>
         `;
       });
+
+      // Update counter
+      document.getElementById('resultCount').textContent = `Menampilkan ${totalVisiblePilars} Pilar, ${totalVisibleSubpilars} Sub Pilar, ${totalVisiblePoints} Point Indikator`;
+      updateCheckedCounter();
+
+      if (totalVisiblePoints === 0) {
+        container.innerHTML = `
+          <div class="empty-box">
+            <div style="font-size: 1.8rem; margin-bottom: 6px;">🔍</div>
+            <div style="font-weight: 700; color: var(--text); margin-bottom: 4px;">Tidak ada point indikator yang cocok</div>
+            <div style="font-size: 0.8rem;">Coba sesuaikan kata kunci pencarian atau ubah filter pilar/status.</div>
+          </div>
+        `;
+        return;
+      }
 
       container.innerHTML = html;
     }
 
     // Init
     document.addEventListener('DOMContentLoaded', () => {
-      renderList();
+      updateSubPilarOptions();
+      renderTree();
     });
   </script>
 </body>
@@ -1626,6 +1909,6 @@ html_content = '''<!DOCTYPE html>
 '''
 
 with open("index.html", "w", encoding="utf-8") as f:
-    f.write(html_content)
+    f.write(html_template)
 
-print("index.html successfully updated!")
+print("index.html updated to 3-tier hierarchy: Pilar -> Sub Pilar -> Point!")
