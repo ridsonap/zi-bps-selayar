@@ -969,6 +969,17 @@ html_content = '''<!DOCTYPE html>
         <p style="font-size: 0.82rem; color: var(--text-muted);">Format dokumen baku bertuliskan kop resmi <strong>Badan Pusat Statistik Kabupaten Kepulauan Selayar</strong> untuk memenuhi bukti dukung LKE 2025.</p>
       </div>
 
+      <!-- Banner Download Semua -->
+      <div style="background: var(--primary-light); border: 1px solid var(--primary-border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <div style="font-size: 0.95rem; font-weight: 800; color: var(--primary);">📦 Paket Lengkap Bukti Dukung 6 Area (ZIP)</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Memuat seluruh 110 folder indikator, 119 dokumen Word (.docx), master checklist Excel, dan panduan resmi pemetaan BPS RI.</div>
+        </div>
+        <a href="templates/Bukti_Dukung_ZI_BPS_Kepulauan_Selayar_2025_LENGKAP.zip" download class="btn-download-tpl" style="width: auto; padding: 10px 18px; background: var(--primary);">
+          <span>⚡</span><span>Unduh Paket Lengkap .ZIP (5 MB)</span>
+        </a>
+      </div>
+
       <div class="template-grid">
         <!-- Template 0: Master Checklist Excel -->
         <div class="tpl-card" style="border-left: 4px solid var(--success);">
