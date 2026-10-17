@@ -312,7 +312,7 @@ html_content = '''<!DOCTYPE html>
       display: block;
     }
 
-    /* FILTER BAR */
+    /* FILTER BAR & DROPDOWNS */
     .filter-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -321,7 +321,7 @@ html_content = '''<!DOCTYPE html>
       margin-bottom: 16px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
     .search-box {
       position: relative;
@@ -352,54 +352,69 @@ html_content = '''<!DOCTYPE html>
       pointer-events: none;
     }
 
-    .filter-row {
+    /* DROPDOWN CONTROLS ROW */
+    .dropdown-controls-row {
+      display: grid;
+      grid-template-columns: 2fr 1.2fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .dropdown-group {
       display: flex;
       align-items: center;
       gap: 6px;
-      flex-wrap: wrap;
     }
-    .filter-label {
+    .dropdown-label {
       font-size: 0.72rem;
       font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-right: 4px;
-      flex-shrink: 0;
-    }
-    .chip {
-      padding: 5px 12px;
-      border-radius: var(--radius-full);
-      font-size: 0.78rem;
-      font-weight: 600;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text-muted);
-      cursor: pointer;
       white-space: nowrap;
+    }
+    .select-dropdown {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: #ffffff;
+      color: var(--text);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
       transition: all 0.15s ease;
     }
-    .chip:hover {
-      border-color: var(--text-muted);
+    .select-dropdown:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .dropdown-actions-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 6px;
+      border-top: 1px dashed var(--border);
+    }
+    .btn-toggle-all {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 5px 11px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-toggle-all:hover {
+      background: #e2e8f0;
       color: var(--text);
     }
-    .chip.active {
-      background: var(--primary);
-      border-color: var(--primary);
-      color: #ffffff;
-    }
-    .chip-warning.active {
-      background: var(--warning);
-      border-color: var(--warning);
-      color: #ffffff;
-    }
-    .chip-success.active {
-      background: var(--success);
-      border-color: var(--success);
-      color: #ffffff;
-    }
     .btn-reset-checks {
-      margin-left: auto;
       font-size: 0.74rem;
       font-weight: 600;
       color: var(--danger);
@@ -424,50 +439,92 @@ html_content = '''<!DOCTYPE html>
       padding: 0 2px;
     }
 
-    /* INDICATOR CARD */
-    .ind-card {
+    /* DROPDOWN ACCORDION ITEM */
+    .ind-dropdown {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 12px;
-      transition: border-color 0.15s ease;
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      overflow: hidden;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
-    .ind-card:hover {
+    .ind-dropdown:hover {
       border-color: #cbd5e1;
     }
-    .ind-card.state-missing {
+    .ind-dropdown[open] {
+      border-color: #94a3b8;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+    .ind-dropdown.state-missing {
       border-left: 4px solid var(--danger);
     }
-    .ind-card.state-partial {
+    .ind-dropdown.state-partial {
       border-left: 4px solid var(--warning);
     }
-    .ind-card.state-complete {
+    .ind-dropdown.state-complete {
       border-left: 4px solid var(--success);
     }
 
-    .ind-header {
+    /* SUMMARY / HEADER */
+    .ind-summary {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
+      padding: 12px 14px;
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+      gap: 10px;
     }
-    .ind-tags {
+    .ind-summary::-webkit-details-marker {
+      display: none;
+    }
+    .ind-summary-left {
       display: flex;
       align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
     }
     .code-tag {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 800;
-      padding: 2px 8px;
+      padding: 2px 7px;
       border-radius: var(--radius-sm);
       background: var(--bg);
       color: var(--text);
       border: 1px solid var(--border);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .ind-summary-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.35;
+    }
+    .ind-summary-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .chevron-icon {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+      display: inline-block;
+    }
+    .ind-dropdown[open] .chevron-icon {
+      transform: rotate(180deg);
+    }
+
+    /* DROPDOWN BODY */
+    .ind-body {
+      padding: 0 16px 16px 16px;
+      border-top: 1px dashed var(--border);
+      margin-top: 4px;
+      padding-top: 12px;
     }
     .area-tag {
       font-size: 0.75rem;
@@ -819,8 +876,9 @@ html_content = '''<!DOCTYPE html>
       .hero-title { font-size: 1.15rem; }
       .stats-row { grid-template-columns: 1fr 1fr; }
       .tabs-nav { top: 0; }
-      .filter-row { gap: 4px; }
-      .chip { font-size: 0.74rem; padding: 4px 10px; }
+      .dropdown-controls-row { grid-template-columns: 1fr; }
+      .ind-summary { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .ind-summary-right { width: 100%; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 6px; }
     }
     @media (max-width: 480px) {
       .stats-row { grid-template-columns: 1fr; }
@@ -930,24 +988,38 @@ html_content = '''<!DOCTYPE html>
           <input type="text" id="searchInput" class="search-input" placeholder="Cari bukti dukung, SOP, SK, notula, kode (misal: 1.a), atau kata kunci..." oninput="onSearchChange(this.value)">
         </div>
 
-        <!-- Area Filter -->
-        <div class="filter-row">
-          <span class="filter-label">Area:</span>
-          <button type="button" class="chip active" data-area="all" onclick="setArea('all')">Semua (110)</button>
-          <button type="button" class="chip" data-area="1" onclick="setArea('1')">1. Perubahan (16)</button>
-          <button type="button" class="chip" data-area="2" onclick="setArea('2')">2. Tatalaksana (15)</button>
-          <button type="button" class="chip" data-area="3" onclick="setArea('3')">3. SDM (21)</button>
-          <button type="button" class="chip" data-area="4" onclick="setArea('4')">4. Akuntabilitas (14)</button>
-          <button type="button" class="chip" data-area="5" onclick="setArea('5')">5. Pengawasan (22)</button>
-          <button type="button" class="chip" data-area="6" onclick="setArea('6')">6. Pelayanan (22)</button>
+        <!-- Dropdown Controls Row -->
+        <div class="dropdown-controls-row">
+          <div class="dropdown-group">
+            <span class="dropdown-label">Area:</span>
+            <select id="areaDropdown" class="select-dropdown" onchange="setArea(this.value)">
+              <option value="all">🏢 Semua Area Perubahan (110 Indikator)</option>
+              <option value="1">1. Manajemen Perubahan (16)</option>
+              <option value="2">2. Penataan Tatalaksana (15)</option>
+              <option value="3">3. Penataan Sistem Manajemen SDM (21)</option>
+              <option value="4">4. Penguatan Akuntabilitas Kinerja (14)</option>
+              <option value="5">5. Penguatan Pengawasan (22)</option>
+              <option value="6">6. Peningkatan Kualitas Pelayanan Publik (22)</option>
+            </select>
+          </div>
+
+          <div class="dropdown-group">
+            <span class="dropdown-label">Status:</span>
+            <select id="statusDropdown" class="select-dropdown" onchange="setStatus(this.value)">
+              <option value="all">🔍 Semua Status</option>
+              <option value="attention">⚠️ Perlu Dilengkapi (35)</option>
+              <option value="complete">✅ Lengkap (75)</option>
+            </select>
+          </div>
+
+          <div class="dropdown-group" style="justify-content: flex-end;">
+            <button type="button" class="btn-toggle-all" onclick="toggleAllDropdowns(true)" title="Buka semua dropdown indikator">▼ Buka Semua</button>
+            <button type="button" class="btn-toggle-all" onclick="toggleAllDropdowns(false)" title="Tutup semua dropdown indikator">▲ Tutup Semua</button>
+          </div>
         </div>
 
-        <!-- Status Filter -->
-        <div class="filter-row">
-          <span class="filter-label">Status:</span>
-          <button type="button" class="chip active" data-status="all" onclick="setStatus('all')">Semua Status</button>
-          <button type="button" class="chip chip-warning" data-status="attention" onclick="setStatus('attention')">⚠️ Perlu Dilengkapi (35)</button>
-          <button type="button" class="chip chip-success" data-status="complete" onclick="setStatus('complete')">✅ Lengkap (75)</button>
+        <div class="dropdown-actions-row">
+          <span style="font-size: 0.75rem; color: var(--text-muted);">💡 Klik baris indikator untuk membuka/menutup rincian bukti dukung &amp; berkas.</span>
           <button type="button" class="btn-reset-checks" onclick="resetChecks()" title="Reset semua tanda centang verifikasi checklist">🔄 Reset Centang</button>
         </div>
       </div>
@@ -1298,18 +1370,22 @@ html_content = '''<!DOCTYPE html>
     // Filters
     function setArea(num) {
       activeArea = num;
-      document.querySelectorAll('[data-area]').forEach(el => {
-        el.classList.toggle('active', el.getAttribute('data-area') === num);
-      });
+      const el = document.getElementById('areaDropdown');
+      if (el && el.value !== num) el.value = num;
       renderList();
     }
 
     function setStatus(st) {
       activeStatus = st;
-      document.querySelectorAll('[data-status]').forEach(el => {
-        el.classList.toggle('active', el.getAttribute('data-status') === st);
-      });
+      const el = document.getElementById('statusDropdown');
+      if (el && el.value !== st) el.value = st;
       renderList();
+    }
+
+    function toggleAllDropdowns(open) {
+      document.querySelectorAll('.ind-dropdown').forEach(d => {
+        d.open = open;
+      });
     }
 
     function onSearchChange(val) {
@@ -1474,63 +1550,66 @@ html_content = '''<!DOCTYPE html>
           `;
         }
 
+        const isOpen = searchQuery.length > 0;
+
         html += `
-          <div class="ind-card ${cardState}">
-            <div class="ind-header">
-              <div class="ind-tags">
+          <details class="ind-dropdown ${cardState}" id="drop-${safe}" ${isOpen ? 'open' : ''}>
+            <summary class="ind-summary">
+              <div class="ind-summary-left">
                 <span class="code-tag">${itm.code}</span>
-                <span class="area-tag">Area ${itm.areaNum}: ${itm.areaTitle} • ${itm.aspect}</span>
+                <div>
+                  <div class="ind-summary-title">${itm.question}</div>
+                  <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">Area ${itm.areaNum}: ${itm.areaTitle} • ${itm.aspect}</div>
+                </div>
               </div>
-              <span class="badge-status ${badgeState}">${badgeText}</span>
-            </div>
-
-            <h3 class="ind-title">${itm.question}</h3>
-
-            <div class="ind-bukti-box">
-              <div class="ind-bukti-top">
-                <span>Bukti Dukung yang Wajib Diunggah:</span>
-                <span style="font-size: 0.68rem; text-transform: none;">centang jika siap</span>
+              <div class="ind-summary-right">
+                <span class="badge-status ${badgeState}">${badgeText}</span>
+                <span style="font-size: 0.74rem; color: var(--text-muted); font-weight: 600;">${(itm.bukti || []).length} berkas</span>
+                <span class="chevron-icon">▼</span>
               </div>
-              <ul class="ind-bukti-list">
-                ${buktiRows}
-              </ul>
-            </div>
+            </summary>
 
-            ${noteHtml}
-
-            <div class="ind-actions">
-              <div class="ind-btn-group">
-                <a href="https://drive.google.com/drive/folders/16lT-0q81UKuSPrtD-_UGcEj4Nh2Jms_3?usp=sharing" target="_blank" rel="noopener noreferrer" class="btn-action" title="Folder Drive: ${itm.drive_folder || 'Root'}">
-                  <span>📁</span><span>Folder Drive</span>
-                </a>
-                ${linkContohBtn}
-                <button type="button" class="btn-action" onclick="copyBukti('${itm.code}')">
-                  <span>📋</span><span>Salin Berkas</span>
-                </button>
+            <div class="ind-body">
+              <div class="ind-bukti-box">
+                <div class="ind-bukti-top">
+                  <span>Bukti Dukung yang Wajib Diunggah:</span>
+                  <span style="font-size: 0.68rem; text-transform: none;">centang jika siap</span>
+                </div>
+                <ul class="ind-bukti-list">
+                  ${buktiRows}
+                </ul>
               </div>
 
-              <button type="button" class="btn-detail-link" id="btn-detail-${safe}" onclick="toggleDetail('${itm.code}')">
-                <span>ℹ️</span><span>Kriteria &amp; Narasi</span>
-              </button>
-            </div>
+              ${noteHtml}
 
-            <div class="ind-detail" id="detail-${safe}">
+              <div class="ind-actions" style="margin-bottom: 12px;">
+                <div class="ind-btn-group">
+                  <a href="https://drive.google.com/drive/folders/16lT-0q81UKuSPrtD-_UGcEj4Nh2Jms_3?usp=sharing" target="_blank" rel="noopener noreferrer" class="btn-action" title="Folder Drive: ${itm.drive_folder || 'Root'}">
+                    <span>📁</span><span>Folder Drive</span>
+                  </a>
+                  ${linkContohBtn}
+                  <button type="button" class="btn-action" onclick="copyBukti('${itm.code}')">
+                    <span>📋</span><span>Salin Berkas</span>
+                  </button>
+                </div>
+              </div>
+
               <div class="detail-section">
                 <div class="detail-section-title">Kriteria Penilaian:</div>
-                <div style="white-space: pre-line;">${itm.kriteria || '-'}</div>
+                <div style="white-space: pre-line; font-size: 0.8rem; color: var(--text-muted);">${itm.kriteria || '-'}</div>
               </div>
-              <div class="detail-section">
-                <div class="detail-section-title">Jawaban &amp; Nilai Satker:</div>
-                <div>Jawaban: <strong>${itm.jawaban || '-'}</strong> (Nilai: <strong>${itm.nilai}</strong>)</div>
+              <div class="detail-section" style="margin-top: 6px; font-size: 0.8rem;">
+                <span class="detail-section-title">Jawaban &amp; Nilai Satker:</span>
+                <span>Jawaban: <strong>${itm.jawaban || '-'}</strong> (Nilai: <strong>${itm.nilai}</strong>)</span>
               </div>
               ${itm.narasi ? `
-                <div class="detail-section">
+                <div class="detail-section" style="margin-top: 6px;">
                   <div class="detail-section-title">Narasi / Catatan Satker:</div>
-                  <div style="font-style: italic; background: var(--bg); padding: 8px 10px; border-radius: var(--radius-sm); border-left: 2px solid var(--border);">${itm.narasi}</div>
+                  <div style="font-style: italic; font-size: 0.8rem; background: var(--bg); padding: 8px 10px; border-radius: var(--radius-sm); border-left: 2px solid var(--border); color: var(--text-muted);">${itm.narasi}</div>
                 </div>
               ` : ''}
             </div>
-          </div>
+          </details>
         `;
       });
 
