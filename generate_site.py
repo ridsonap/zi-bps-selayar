@@ -1890,6 +1890,14 @@ html_template = '''<!DOCTYPE html>
       container.innerHTML = html;
     }
 
+    // Prevent nested <details> toggle conflict: clicking a child summary
+    // must not bubble up and toggle parent details elements.
+    document.addEventListener('click', (e) => {
+      if (e.target.matches('summary') || e.target.closest('summary')) {
+        e.stopPropagation();
+      }
+    });
+
     // Init
     document.addEventListener('DOMContentLoaded', () => {
       updateSubPilarOptions();
